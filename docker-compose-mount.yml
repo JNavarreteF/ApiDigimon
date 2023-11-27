@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  apiDigimon:
+    image: apidigimon:1.0.0
+    ports:
+      - "8080:8080"
+    networks:
+      - digimon_network
+    depends_on:
+      - digimon_db
+    build: .
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+  digimon_db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: digimon_db
+    volumes:
+      - vl_digimon_db:/var/opt/mssql
+      - ./ApiDigimon/Migrations/db/docker-entrypoint.sh:/entrypoint.sh
+      - ./ApiDigimon/Migrations/db/docker-db-init.sh:/db-init.sh
+      - ./ApiDigimon/Migrations/db/digimon-db-init.sql:/digimon-db-init.sql
+    environment:
+      - ACCEPT_EULA="Y"
+      - MSSQL_SA_PASSWORD=Jnavarrete2024*
+    ports:
+      - "1434:1433"
+    networks:
+      - digimon_network
+    
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    networks:
+      - digimon_network
+    volumes:
+      - ./ApiDigimon/Migrations/db/docker-entrypoint.sh:/entrypoint.sh
+      - ./ApiDigimon/Migrations/db/docker-db-init.sh:/db-init.sh
+      - ./ApiDigimon/Migrations/db/digimon-db-init.sql:/digimon-db-init.sql
+    command: /bin/sh ./entrypoint.sh
+    depends_on:
+      - digimon_db
+volumes:
+  vl_digimon_db:
+
+networks:
+  digimon_network:
+    driver: bridge
